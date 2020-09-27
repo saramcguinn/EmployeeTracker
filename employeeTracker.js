@@ -24,16 +24,6 @@ connection.connect(function (err) {
     start();
 });
 
-// ask "What would you like to do?"
-// choices: 
-//      View All Employees
-//      View All Employees By Department
-//      View All Employees by MAnager
-//      Add Employee
-//      Update Employee Role
-//      extra: Remove Employee
-//      extra: Update Employee Manager
-
 function start() {
     inquirer.prompt([
         {
@@ -45,7 +35,6 @@ function start() {
                 'View All Departments',
                 'View All Jobs',
                 'View Employees By Department',
-                'View Employees By Manager',
                 'Add Employee',
                 'Add Department',
                 'Add Job',
@@ -60,10 +49,8 @@ function start() {
                 viewAllDepts();
             } else if (answers.start === 'View All Jobs') {
                 viewAllJobs();
-            } else if (answers.start === 'View All Employees By Department') {
+            } else if (answers.start === 'View Employees By Department') {
                 // viewEmplsByDept();
-            } else if (answers.start === 'View All Employees By Manager') {
-                //viewEmplsByManager();
             } else if (answers.start === 'Add Employee') {
                 addEmpl();
             } else if (answers.start === 'Add Department') {
@@ -71,15 +58,18 @@ function start() {
             } else if (answers.start === 'Add Job') {
                 addJob();
             } else if (answers.start === 'Update Employee Job') {
-                //updateEmplJob();
+                updateEmplJob();
             }
         })
 }
 
 function viewAllEmpls() {
-    connection.query("SELECT empl_id, first_name, last_name FROM employees", function (err,res) {
+    let sql = "SELECT empl_id AS `Employee ID`, first_name AS `First Name`, last_name AS `Last Name`, title AS Title, dept_name AS Department FROM employees INNER JOIN jobs ON employees.job_id = jobs.job_id INNER JOIN departments ON jobs.dept_id = departments.dept_id"
+    connection.query(sql, function (err,res) {
         if (err) throw err;
+        console.log('\n');
         console.table(res);
+        console.log("======================================================", '\n')
         start();
     })
 }
@@ -266,8 +256,55 @@ function addJob() {
         })
 }
 
-// function updateEmplJob() {
+function updateEmplJob() {
+    connection.query("SELECT * FROM employees", function(err, emplRes) {
+        if (err) throw err;
+        connection.query("SELECT * FROM jobs", function(err, jobRes) {
+            if (err) throw err;
+            inquirer.prompt([
+                {
+                    name: "updatedEmpl",
+                    type: "list",
+                    message: "Which employee's job would you like to update?",
+                    choices: emplRes.map(function(item) {
+                        return `${item.first_name} ${item.last_name}`
+                    })
+                },
+                {
+                    name: "emplNewJob",
+                    type: "list",
+                    message: "What is the employee's new job?",
+                    choices: jobRes.map(function(item) {
+                        return item.title
+                    })
+                }
+            ])
+            .then (answers => {
+                connection.query(
+                    "UPDATE employees SET ? WHERE ?",
+                    [
+                        {
+                            job_id: jobRes.find(function(item) {
+                                return item.title === answers.emplNewJob
+                            }).job_id
+                        },
+                        {
+                            empl_id: emplRes.find(function(item) {
+                                return `${item.first_name} ${item.last_name}` === answers.updatedEmpl
+                            }).empl_id
+                        }
+                    ],
+                    function(err) {
+                        if (err) throw err;
+                        console.log("Employee job updated");
+                        start();
+                    }
+                )
+            })
+        })
+    })
 
-// }
 
-// UPDATE employees SET ? WHERE ?
+
+    
+}
