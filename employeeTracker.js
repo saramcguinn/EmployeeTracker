@@ -61,15 +61,15 @@ function start() {
             } else if (answers.start === 'View All Jobs') {
                 viewAllJobs();
             } else if (answers.start === 'View All Employees By Department') {
-                viewEmplsByDept();
+                // viewEmplsByDept();
             } else if (answers.start === 'View All Employees By Manager') {
                 //viewEmplsByManager();
             } else if (answers.start === 'Add Employee') {
                 //addEmpl();
             } else if (answers.start === 'Add Department') {
-                //addDept();
+                addDept();
             } else if (answers.start === 'Add Job') {
-                //addJob();
+                addJob();
             } else if (answers.start === 'Update Employee Job') {
                 //updateEmplJob();
             }
@@ -100,43 +100,46 @@ function viewAllJobs() {
     })
 }
 
-function viewEmplsByDept() {
-    connection.query("SELECT * FROM departments", function (err, results) {
-        if (err) throw err;
-        let deptArr = [];
-        for (var i = 0; i < results.length; i++) {
-            deptArr.push(results[i].dept_name);
-        }
-        inquirer.prompt([
-            {
-                type: 'list',
-                name: 'department',
-                message: 'Choose department:',
-                choices: deptArr
-            }
-        ])
-            .then(answers => {
-                
+// function viewEmplsByDept() {
+//     connection.query("SELECT * FROM departments", function (err, results) {
+//         if (err) throw err;
+//         let deptArr = [];
+//         for (var i = 0; i < results.length; i++) {
+//             deptArr.push(results[i].dept_name);
+//         }
+//         inquirer.prompt([
+//             {
+//                 type: 'list',
+//                 name: 'department',
+//                 message: 'Choose department:',
+//                 choices: deptArr
+//             }
+//         ])
+//             .then(answers => {
+//                 connection.query(
+//                     "SELECT e.first_name, e.last_name, j.title FROM employees e ")
 
 
-                let dept = answers.department;
-                connection.query("SELECT dept_id FROM departments WHERE dept_name=?", [dept], function (err, res) {
-                    if (err) throw err;
-                    let deptID = res[0].dept_id;
-                    connection.query("SELECT job_id FROM jobs WHERE dept_id=?", [deptID], function (err, res) {
-                        if (err) throw err;
-                        let jobIDArr = [];
-                        for (let i=0; i<res.length; i++) {
-                            jobIDArr.push(res[i].job_id);
-                        }
-                        connection.query("SELECT first_name, last_name from employees WHERE job_id=?", [3 && 4], function(err,res) {
-                            console.table(res);
-                        })
-                    })
-                })
-            })
-    })
-}
+//                 let dept = answers.department;
+//                 connection.query("SELECT employees.last_name, employees.first_name, jobs.title FROM employees INNER JOIN jobs ON employees.job_id = jobs.job_id INNER JOIN departments ON jobs.dept_id = departments.dept_id WHERE departments.dept_id=dept)
+
+//                 connection.query("SELECT dept_id FROM departments WHERE dept_name=?", [dept], function (err, res) {
+//                     if (err) throw err;
+//                     let deptID = res[0].dept_id;
+//                     connection.query("SELECT job_id FROM jobs WHERE dept_id=?", [deptID], function (err, res) {
+//                         if (err) throw err;
+//                         let jobIDArr = [];
+//                         for (let i=0; i<res.length; i++) {
+//                             jobIDArr.push(res[i].job_id);
+//                         }
+//                         connection.query("SELECT first_name, last_name from employees WHERE job_id=?", [3 && 4], function(err,res) {
+//                             console.table(res);
+//                         })
+//                     })
+//                 })
+//             })
+//     })
+// }
 
 // function viewEmplsByManager() {
 
@@ -145,6 +148,78 @@ function viewEmplsByDept() {
 // function addEmpl() {
 
 // }
+
+function addDept() {
+    inquirer.prompt([
+        {
+            name: "newDept",
+            type: "input",
+            message: "New department name:"
+        }
+    ])
+    .then(answers => {
+        connection.query(
+            "INSERT INTO departments SET ?",
+            {
+                dept_name: answers.newDept
+            },
+            function(err) {
+                if (err) throw err;
+                console.log("New department added");
+                start();
+            }
+        )
+    })
+}
+
+function addJob() {
+    connection.query("SELECT * FROM departments", function (err, results) {
+        if (err) throw err;
+        let deptArr = [];
+        for (var i = 0; i < results.length; i++) {
+            deptArr.push(results[i].dept_name);
+        }
+            inquirer.prompt([
+                {
+                    name: "newJob",
+                    type: "input",
+                    message: "New job title:"
+                },
+                {
+                    name: "newJobDept",
+                    type: "list",
+                    message: "What department is this new job in?",
+                    choices: deptArr
+                },
+                {
+                    name: "newSalary",
+                    type: "input",
+                    message: "New job salary (numbers only, no dollar signs, commas, or periods"
+                }
+            ])
+            .then(answers => {
+                let newJobDept = answers.newJobDept;
+                connection.query("SELECT dept_id FROM departments WHERE dept_name=?", [newJobDept], function(err, res) {
+                    if (err) throw err;
+                    let newJobDeptID = res.dept_id;
+                    console.log(newJobDeptID);
+                })
+                    connection.query(
+                        "INSERT INTO jobs SET ?",
+                        {
+                            title: answers.newJob,
+                            salary: answers.newSalary,
+                            dept_id: newJobDeptID,
+                        },
+                        function(err) {
+                            if (err) throw err;
+                            console.log("New job added");
+                            start();
+                        }
+                    )
+            })
+        })
+}
 
 // function updateEmplJob() {
 
