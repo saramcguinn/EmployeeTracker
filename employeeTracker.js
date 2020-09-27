@@ -35,48 +35,108 @@ connection.connect(function (err) {
 //      extra: Update Employee Manager
 
 function start() {
-    return inquirer.prompt([
+    inquirer.prompt([
         {
             type: 'list',
             name: 'start',
             message: 'What would you like to do?',
             choices: [
                 'View All Employees',
-                'View All Employees By Department',
-                'View All Employees By Manager',
+                'View All Departments',
+                'View All Jobs',
+                'View Employees By Department',
+                'View Employees By Manager',
                 'Add Employee',
+                'Add Department',
+                'Add Job',
                 'Update Employee Job'
             ]
         }
     ])
         .then(answers => {
             if (answers.start === 'View All Employees') {
-                console.log("you chose view all empls");
-                // viewAllEmpls();
+                viewAllEmpls();
+            } else if (answers.start === 'View All Departments') {
+                viewAllDepts();
+            } else if (answers.start === 'View All Jobs') {
+                viewAllJobs();
             } else if (answers.start === 'View All Employees By Department') {
-                console.log("you chose view empls by dept");
-                // viewEmplsByDept();
+                viewEmplsByDept();
             } else if (answers.start === 'View All Employees By Manager') {
-                console.log("you chose view empls by manager");
                 //viewEmplsByManager();
             } else if (answers.start === 'Add Employee') {
-                console.log("you chose add employee");
-                // addEmpl();
+                //addEmpl();
+            } else if (answers.start === 'Add Department') {
+                //addDept();
+            } else if (answers.start === 'Add Job') {
+                //addJob();
             } else if (answers.start === 'Update Employee Job') {
-                console.log("you chose update employee job");
                 //updateEmplJob();
             }
         })
 }
 
-// function viewAllEmpls() {
+function viewAllEmpls() {
+    connection.query("SELECT empl_id, first_name, last_name FROM employees", function (err,res) {
+        if (err) throw err;
+        console.table(res);
+        start();
+    })
+}
 
-// }
+function viewAllDepts() {
+    connection.query("SELECT * FROM departments", function (err,res) {
+        if (err) throw err;
+        console.table(res);
+        start();
+    })
+}
 
-// function viewEmplsByDept() {
-//     let emplsByDeptArr = [connection.query("SELECT")]
-//     console.table(emplsByDeptArr);
-// }
+function viewAllJobs() {
+    connection.query("SELECT * FROM jobs", function (err,res) {
+        if (err) throw err;
+        console.table(res);
+        start();
+    })
+}
+
+function viewEmplsByDept() {
+    connection.query("SELECT * FROM departments", function (err, results) {
+        if (err) throw err;
+        let deptArr = [];
+        for (var i = 0; i < results.length; i++) {
+            deptArr.push(results[i].dept_name);
+        }
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'department',
+                message: 'Choose department:',
+                choices: deptArr
+            }
+        ])
+            .then(answers => {
+                
+
+
+                let dept = answers.department;
+                connection.query("SELECT dept_id FROM departments WHERE dept_name=?", [dept], function (err, res) {
+                    if (err) throw err;
+                    let deptID = res[0].dept_id;
+                    connection.query("SELECT job_id FROM jobs WHERE dept_id=?", [deptID], function (err, res) {
+                        if (err) throw err;
+                        let jobIDArr = [];
+                        for (let i=0; i<res.length; i++) {
+                            jobIDArr.push(res[i].job_id);
+                        }
+                        connection.query("SELECT first_name, last_name from employees WHERE job_id=?", [3 && 4], function(err,res) {
+                            console.table(res);
+                        })
+                    })
+                })
+            })
+    })
+}
 
 // function viewEmplsByManager() {
 

@@ -22,7 +22,7 @@ CREATE TABLE employees(
     empl_id INT NOT NULL AUTO_INCREMENT,
     first_name VARCHAR(30) NOT NULL,
     last_name VARCHAR(30) NOT NULL,
-    pos_id INT NOT NULL REFERENCES jobs(job_id),
+    job_id INT NOT NULL REFERENCES jobs(job_id),
     manager_id INT REFERENCES employees(empl_id),
     PRIMARY KEY (empl_id)
 );
