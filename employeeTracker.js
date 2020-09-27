@@ -65,7 +65,7 @@ function start() {
             } else if (answers.start === 'View All Employees By Manager') {
                 //viewEmplsByManager();
             } else if (answers.start === 'Add Employee') {
-                //addEmpl();
+                addEmpl();
             } else if (answers.start === 'Add Department') {
                 addDept();
             } else if (answers.start === 'Add Job') {
@@ -103,16 +103,14 @@ function viewAllJobs() {
 // function viewEmplsByDept() {
 //     connection.query("SELECT * FROM departments", function (err, results) {
 //         if (err) throw err;
-//         let deptArr = [];
-//         for (var i = 0; i < results.length; i++) {
-//             deptArr.push(results[i].dept_name);
-//         }
 //         inquirer.prompt([
 //             {
 //                 type: 'list',
 //                 name: 'department',
 //                 message: 'Choose department:',
-//                 choices: deptArr
+//                 choices: results.map(function(item) {
+//                  return item.dept_name
+//                  })
 //             }
 //         ])
 //             .then(answers => {
@@ -145,9 +143,62 @@ function viewAllJobs() {
 
 // }
 
-// function addEmpl() {
-
-// }
+function addEmpl() {
+    connection.query("SELECT * from employees", function(err, emplRes) {
+        if (err) throw err;
+        connection.query("SELECT * from jobs", function(err, jobRes) {
+            if (err) throw err;
+            inquirer.prompt([
+                {
+                    name: "emplFirstName",
+                    type: "input",
+                    message: "First name of new employee:"
+                },
+                {
+                    name: "emplLastName",
+                    type: "input",
+                    message: "Last name of new employee"
+                },
+                {
+                    name: "emplJob",
+                    type: "list",
+                    message: "Job of new employee",
+                    choices: jobRes.map(function(item) {
+                        return item.title
+                    })
+                },
+                {
+                    name: "emplManager",
+                    type: "list",
+                    message: "Manager of new employee",
+                    choices: [...emplRes.map(function(item) {
+                        return `${item.first_name} ${item.last_name}`;
+                    }), "None"]
+                }
+            ])
+            .then (answers => {
+                connection.query(
+                    "INSERT INTO employees SET ?",
+                    {
+                        first_name: answers.emplFirstName,
+                        last_name: answers.emplLastName,
+                        job_id: jobRes.find(function(item) {
+                            return item.title === answers.emplJob
+                        }).job_id,
+                        manager_id: emplRes.find(function(item) {
+                            return `${item.first_name} ${item.last_name}` === answers.emplManager
+                        }).empl_id || null,
+                    },
+                    function(err) {
+                        if (err) throw err;
+                        console.log("New employee added");
+                        start();
+                    }
+                    )
+            })
+        });
+    });
+}
 
 function addDept() {
     inquirer.prompt([
@@ -175,10 +226,6 @@ function addDept() {
 function addJob() {
     connection.query("SELECT * FROM departments", function (err, results) {
         if (err) throw err;
-        let deptArr = [];
-        for (var i = 0; i < results.length; i++) {
-            deptArr.push(results[i].dept_name);
-        }
             inquirer.prompt([
                 {
                     name: "newJob",
@@ -189,27 +236,25 @@ function addJob() {
                     name: "newJobDept",
                     type: "list",
                     message: "What department is this new job in?",
-                    choices: deptArr
+                    choices: results.map(function(item) {
+                        return item.dept_name;
+                    })
                 },
                 {
                     name: "newSalary",
                     type: "input",
-                    message: "New job salary (numbers only, no dollar signs, commas, or periods"
+                    message: "New job salary (numbers only, no dollar signs, commas, or periods)"
                 }
             ])
             .then(answers => {
-                let newJobDept = answers.newJobDept;
-                connection.query("SELECT dept_id FROM departments WHERE dept_name=?", [newJobDept], function(err, res) {
-                    if (err) throw err;
-                    let newJobDeptID = res.dept_id;
-                    console.log(newJobDeptID);
-                })
                     connection.query(
                         "INSERT INTO jobs SET ?",
                         {
                             title: answers.newJob,
                             salary: answers.newSalary,
-                            dept_id: newJobDeptID,
+                            dept_id: results.find(function(item) {
+                                return item.dept_name === answers.newJobDept
+                            }).dept_id
                         },
                         function(err) {
                             if (err) throw err;
@@ -224,3 +269,5 @@ function addJob() {
 // function updateEmplJob() {
 
 // }
+
+// UPDATE employees SET ? WHERE ?
