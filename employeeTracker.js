@@ -24,6 +24,7 @@ connection.connect(function (err) {
     start();
 });
 
+// ask user what they want to do & run functions accordingly
 function start() {
     inquirer.prompt([
         {
@@ -34,7 +35,6 @@ function start() {
                 'View All Employees',
                 'View All Departments',
                 'View All Jobs',
-                'View Employees By Department',
                 'Add Employee',
                 'Add Department',
                 'Add Job',
@@ -49,8 +49,6 @@ function start() {
                 viewAllDepts();
             } else if (answers.start === 'View All Jobs') {
                 viewAllJobs();
-            } else if (answers.start === 'View Employees By Department') {
-                // viewEmplsByDept();
             } else if (answers.start === 'Add Employee') {
                 addEmpl();
             } else if (answers.start === 'Add Department') {
@@ -63,76 +61,39 @@ function start() {
         })
 }
 
+// view all employees
 function viewAllEmpls() {
     let sql = "SELECT empl_id AS `Employee ID`, first_name AS `First Name`, last_name AS `Last Name`, title AS Title, dept_name AS Department FROM employees INNER JOIN jobs ON employees.job_id = jobs.job_id INNER JOIN departments ON jobs.dept_id = departments.dept_id"
     connection.query(sql, function (err,res) {
         if (err) throw err;
         console.log('\n');
         console.table(res);
-        console.log("======================================================", '\n')
+        console.log("======================================================", '\n');
         start();
     })
 }
 
+// view all departments
 function viewAllDepts() {
-    connection.query("SELECT * FROM departments", function (err,res) {
+    connection.query("SELECT dept_id AS `Department ID`, dept_name AS `Department` FROM departments", function (err,res) {
         if (err) throw err;
         console.table(res);
+        console.log("======================================================", '\n');
         start();
     })
 }
 
+// view all jobs
 function viewAllJobs() {
-    connection.query("SELECT * FROM jobs", function (err,res) {
+    connection.query("SELECT job_id AS `Job ID`, title AS `Title`, salary AS `Salary`, dept_id as `Department` FROM jobs", function (err,res) {
         if (err) throw err;
         console.table(res);
+        console.log("======================================================", '\n');
         start();
     })
 }
 
-// function viewEmplsByDept() {
-//     connection.query("SELECT * FROM departments", function (err, results) {
-//         if (err) throw err;
-//         inquirer.prompt([
-//             {
-//                 type: 'list',
-//                 name: 'department',
-//                 message: 'Choose department:',
-//                 choices: results.map(function(item) {
-//                  return item.dept_name
-//                  })
-//             }
-//         ])
-//             .then(answers => {
-//                 connection.query(
-//                     "SELECT e.first_name, e.last_name, j.title FROM employees e ")
-
-
-//                 let dept = answers.department;
-//                 connection.query("SELECT employees.last_name, employees.first_name, jobs.title FROM employees INNER JOIN jobs ON employees.job_id = jobs.job_id INNER JOIN departments ON jobs.dept_id = departments.dept_id WHERE departments.dept_id=dept)
-
-//                 connection.query("SELECT dept_id FROM departments WHERE dept_name=?", [dept], function (err, res) {
-//                     if (err) throw err;
-//                     let deptID = res[0].dept_id;
-//                     connection.query("SELECT job_id FROM jobs WHERE dept_id=?", [deptID], function (err, res) {
-//                         if (err) throw err;
-//                         let jobIDArr = [];
-//                         for (let i=0; i<res.length; i++) {
-//                             jobIDArr.push(res[i].job_id);
-//                         }
-//                         connection.query("SELECT first_name, last_name from employees WHERE job_id=?", [3 && 4], function(err,res) {
-//                             console.table(res);
-//                         })
-//                     })
-//                 })
-//             })
-//     })
-// }
-
-// function viewEmplsByManager() {
-
-// }
-
+// add new employee
 function addEmpl() {
     connection.query("SELECT * from employees", function(err, emplRes) {
         if (err) throw err;
@@ -182,6 +143,7 @@ function addEmpl() {
                     function(err) {
                         if (err) throw err;
                         console.log("New employee added");
+                        console.log("======================================================", '\n');
                         start();
                     }
                     )
@@ -190,6 +152,7 @@ function addEmpl() {
     });
 }
 
+// add new department
 function addDept() {
     inquirer.prompt([
         {
@@ -213,6 +176,7 @@ function addDept() {
     })
 }
 
+// add new job
 function addJob() {
     connection.query("SELECT * FROM departments", function (err, results) {
         if (err) throw err;
@@ -256,6 +220,7 @@ function addJob() {
         })
 }
 
+// update an employee's job
 function updateEmplJob() {
     connection.query("SELECT * FROM employees", function(err, emplRes) {
         if (err) throw err;
@@ -297,14 +262,12 @@ function updateEmplJob() {
                     function(err) {
                         if (err) throw err;
                         console.log("Employee job updated");
+                        console.log("======================================================", '\n');
                         start();
                     }
                 )
             })
         })
     })
-
-
-
     
 }
